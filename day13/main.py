@@ -5,26 +5,28 @@ from collections import defaultdict
 
 class Paper:
     def __init__(self, dots):
-        self.xs = defaultdict(set)
         self.ys = defaultdict(set)
         for x, y in dots:
-            self.xs[x].add(y)
             self.ys[y].add(x)
 
     def fold_along(self, axis, d):
-        modify = self.xs if axis == "x" else self.ys
-        other = self.ys if axis == "x" else self.xs
-        to_fold = [dd for dd in modify.keys() if dd > d]
-        for dd in to_fold:
-            new_d = d - dd + d
-            modify[new_d] |= modify.pop(dd)
-        for dist in other.keys():
-            other[dist] = set(dd if dd <= d else d - dd + d for dd in other[dist])
+        match axis:
+            case "x":
+                for y in self.ys.keys():
+                    self.ys[y] = set(x if x <= d else 2 * d - x for x in self.ys[y])
+            case "y":
+                to_fold = [y for y in self.ys.keys() if y > d]
+                for y in to_fold:
+                    new_y = 2 * d - y
+                    self.ys[new_y] |= self.ys.pop(y)
+
+    def dot_count(self):
+        return sum(len(yy) for yy in paper.ys.values())
 
     def display(self):
         for y, xs in sorted(self.ys.items()):
             w = max(xs)
-            line = ["#" if x in xs else "." for x in range(w + 1)]
+            line = ["#" if x in xs else " " for x in range(w + 1)]
             print("".join(line))
 
 
@@ -41,7 +43,7 @@ if __name__ == "__main__":
     paper = Paper(dots)
     axis, d = instructions[0]
     paper.fold_along(axis, int(d))
-    print(sum(len(xx) for xx in paper.xs.values()))
+    print(paper.dot_count())
 
     for axis, d in instructions[1:]:
         paper.fold_along(axis, int(d))
