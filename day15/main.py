@@ -3,6 +3,7 @@
 from functools import lru_cache
 import sys
 import math
+import heapq
 
 
 def adj(cave, x, y):
@@ -16,15 +17,12 @@ def dijkstra(cave, start):
     w, h = len(cave[0]), len(cave)
     unvisited = set((x, y) for x in range(w) for y in range(h))
     shortest = {c: math.inf for c in unvisited}
+    frontier = []
     # previous = {}
     shortest[start] = 0
+    heapq.heappush(frontier, (0, start))
     while unvisited:
-        current_min = None
-        for node in unvisited:
-            if current_min is None:
-                current_min = node
-            elif shortest[node] < shortest[current_min]:
-                current_min = node
+        _dist, current_min = heapq.heappop(frontier)
 
         for nx, ny in adj(cave, *current_min):
             if (nx, ny) not in unvisited:
@@ -32,9 +30,10 @@ def dijkstra(cave, start):
             tentative = shortest[current_min] + cave[ny][nx]
             if tentative < shortest[(nx, ny)]:
                 shortest[(nx, ny)] = tentative
+                heapq.heappush(frontier, (tentative, (nx, ny)))
                 # previous[(nx, ny)] = current_min
         unvisited.discard(current_min)
-    return 0, shortest
+    return shortest
 
 
 if __name__ == "__main__":
@@ -62,7 +61,7 @@ if __name__ == "__main__":
     # for y in range(new_h):
     #    print("".join(map(str, new_cave[y])))
 
-    _, shortest = dijkstra(cave, (0, 0))
+    shortest = dijkstra(cave, (0, 0))
     print(shortest[(w - 2, h - 2)])
-    _, shortest = dijkstra(new_cave, (0, 0))
+    shortest = dijkstra(new_cave, (0, 0))
     print(shortest[(new_w - 1, new_h - 1)])
