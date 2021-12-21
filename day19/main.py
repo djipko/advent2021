@@ -11,15 +11,6 @@ from scipy.spatial.transform import Rotation as R
 from scipy.spatial import distance
 from numpy.lib.stride_tricks import sliding_window_view
 
-axis_map = dict(zip(range(3), "xyz"))
-
-
-def flip_axis(v, *axis):
-    f = np.array([1, 1, 1])
-    for a in axis:
-        f[axis_map[a]] = -1
-    return v * f
-
 
 class Scanner:
     def __init__(self, _id):
@@ -47,15 +38,15 @@ class Scanner:
         ]
         for axis, deg, facing in rotations:
             r = R.from_euler(axis, deg, degrees=True)
-            new_beacons = np.zeros((len(self.beacons), 3))
-            for i, v in enumerate(self.beacons):
-                new_beacons[i] = np.rint(r.apply(v))
+            new_beacons = np.rint(
+                np.apply_along_axis(lambda v: r.apply(v), axis=1, arr=self.beacons)
+            )
             yield new_beacons
             for spin in (90, 180, 270):
                 r = R.from_euler(facing, spin, degrees=True)
-                spun = np.zeros((len(self.beacons), 3))
-                for i, v in enumerate(new_beacons):
-                    spun[i] = np.rint(r.apply(v))
+                spun = np.rint(
+                    np.apply_along_axis(lambda v: r.apply(v), axis=1, arr=new_beacons)
+                )
                 yield spun
 
     def add_beacons(self, my, found, other):
